@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AgriConnect</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f2f9f1;
+      color: #333;
+    }
+    header {
+      background-color: #4caf50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      background: #388e3c;
+      flex-wrap: wrap;
+    }
+    nav a {
+      padding: 1rem;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover {
+      background: #2e7d32;
+    }
+    .container {
+      padding: 2rem;
+    }
+    section {
+      margin-bottom: 2rem;
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #2e7d32;
+    }
+    label, input, textarea, select {
+      display: block;
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.7rem 1.5rem;
+      background-color: #4caf50;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #388e3c;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>AgriConnect</h1>
+  <p>Empowering Farmers with Technology</p>
+</header>
+
+<nav>
+  <a href="#advice">Crop Advice</a>
+  <a href="#weather">Weather</a>
+  <a href="#price">Market Prices</a>
+  <a href="#contact">Contact Expert</a>
+  <a href="#buy">Buy Crops</a>
+</nav>
+
+<div class="container">
+
+  <section id="advice">
+    <h2>Crop Advisory</h2>
+    <label for="season">Select Season:</label>
+    <select id="season">
+      <option value="">--Select--</option>
+      <option value="kharif">Kharif</option>
+      <option value="rabi">Rabi</option>
+      <option value="summer">Summer</option>
+    </select>
+    <div id="suggestions"></div>
+  </section>
+
+  <section id="weather">
+    <h2>Weather Forecast</h2>
+    <label for="city">Enter City:</label>
+    <input type="text" id="city" placeholder="e.g., Hyderabad">
+    <button onclick="getWeather()">Get Weather</button>
+    <div id="weatherOutput">
+      <p><em>Enter a city to view real-time forecast.</em></p>
+    </div>
+  </section>
+
+  <section id="price">
+    <h2>Check Market Price</h2>
+    <label for="crop">Enter Crop Name:</label>
+    <input type="text" id="crop" placeholder="e.g., Cotton">
+    <button onclick="checkPrice()">Check Price</button>
+    <p id="priceOutput"></p>
+  </section>
+
+  <section id="contact">
+    <h2>Contact an Expert</h2>
+    <form id="contactForm">
+      <label for="name">Your Name:</label>
+      <input type="text" id="name" required>
+
+      <label for="query">Your Query:</label>
+      <textarea id="query" rows="4" required></textarea>
+
+      <button type="submit">Send</button>
+    </form>
+    <p id="formMessage"></p>
+  </section>
+
+  <section id="buy">
+    <h2>Buy from Farmers</h2>
+    <label for="searchCrop">Enter Crop to Buy:</label>
+    <input type="text" id="searchCrop" placeholder="e.g., Paddy">
+    <button onclick="searchListings()">Search</button>
+    <div id="listingResults"></div>
+  </section>
+
+</div>
+
+<script>
+  // Crop suggestions by season
+  const cropSuggestions = {
+    kharif: ['Paddy', 'Maize', 'Soybean', 'Cotton'],
+    rabi: ['Wheat', 'Barley', 'Mustard', 'Peas'],
+    summer: ['Sunflower', 'Cucumber', 'Pumpkin', 'Sesame']
+  };
+
+  document.getElementById('season').addEventListener('change', function () {
+    const season = this.value;
+    const output = document.getElementById('suggestions');
+    if (cropSuggestions[season]) {
+      output.innerHTML = `<p>Recommended Crops: <strong>${cropSuggestions[season].join(', ')}</strong></p>`;
+    } else {
+      output.innerHTML = '';
+    }
+  });
+
+  // Price Checker
+  function checkPrice() {
+    const crop = document.getElementById('crop').value.trim().toLowerCase();
+    const output = document.getElementById('priceOutput');
+    const dummyPrices = {
+      cotton: '₹6400 / quintal',
+      wheat: '₹2300 / quintal',
+      rice: '₹3200 / quintal',
+      paddy: '₹1600 / quintal'
+    };
+    output.textContent = dummyPrices[crop] ? `Current Price: ${dummyPrices[crop]}` : 'No data available.';
+  }
+
+  // Contact Form Handler
+  document.getElementById('contactForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    const name = document.getElementById('name').value;
+    document.getElementById('formMessage').textContent = `Thanks, ${name}! Your query has been sent.`;
+    this.reset();
+  });
+
+  // Weather API using wttr.in
+  async function getWeather() {
+    const city = document.getElementById('city').value.trim();
+    const output = document.getElementById('weatherOutput');
+    if (!city) {
+      output.innerHTML = `<p>Please enter a city name.</p>`;
+      return;
+    }
+
+    const url = `https://wttr.in/${city}?format=j1`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Could not fetch weather data');
+      const data = await response.json();
+
+      const current = data.current_condition[0];
+      const weatherDesc = current.weatherDesc[0].value;
+      const tempC = current.temp_C;
+      const humidity = current.humidity;
+      const windKmph = current.windspeedKmph;
+
+      output.innerHTML = `
+        <p>🌤️ Weather: ${weatherDesc}</p>
+        <p>🌡️ Temperature: ${tempC}°C</p>
+        <p>💧 Humidity: ${humidity}%</p>
+        <p>🌬️ Wind Speed: ${windKmph} km/h</p>
+      `;
+    } catch (error) {
+      output.innerHTML = `<p>Error fetching weather: ${error.message}</p>`;
+    }
+  }
+
+  // Farmer Listings
+  const farmerAds = [
+    {
+      crop: 'paddy',
+      quantity: '10 quintals',
+      price: '₹1500 / quintal',
+      farmer: 'Ramesh',
+      contact: '9876543210'
+    },
+    {
+      crop: 'cotton',
+      quantity: '5 quintals',
+      price: '₹6300 / quintal',
+      farmer: 'Salaar',
+      contact: '9876543222'
+    },
+    {
+      crop: 'paddy',
+      quantity: '8 quintals',
+      price: '₹1550 / quintal',
+      farmer: 'devaratha',
+      contact: '9876543333'
+    },
+    {
+      crop: 'wheat',
+      quantity: '12 quintals',
+      price: '₹2300 / quintal',
+      farmer: 'sahoo',
+      contact: '9876549999'
+    }
+  ];
+
+  function searchListings() {
+    const searchValue = document.getElementById('searchCrop').value.trim().toLowerCase();
+    const resultsDiv = document.getElementById('listingResults');
+    const matchedAds = farmerAds.filter(ad => ad.crop === searchValue);
+
+    if (matchedAds.length === 0) {
+      resultsDiv.innerHTML = `<p>No listings found for "${searchValue}".</p>`;
+      return;
+    }
+
+    let output = `<h3>Available Listings for "${searchValue}"</h3>`;
+    matchedAds.forEach(ad => {
+      output += `
+        <div style="border:1px solid #ccc; padding:1rem; margin:1rem 0; border-radius:8px;">
+          <p><strong>Crop:</strong> ${ad.crop.charAt(0).toUpperCase() + ad.crop.slice(1)}</p>
+          <p><strong>Quantity:</strong> ${ad.quantity}</p>
+          <p><strong>Price:</strong> ${ad.price}</p>
+          <p><strong>Farmer:</strong> ${ad.farmer}</p>
+          <p><strong>Contact:</strong> ${ad.contact}</p>
+        </div>
+      `;
+    });
+
+    resultsDiv.innerHTML = output;
+  }
+</script>
+
+</body>
+</html>
